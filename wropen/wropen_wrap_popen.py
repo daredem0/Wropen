@@ -9,4 +9,8 @@ Encoding: UTF-8
 
 Copyright (c) 2023 Florian Leuze
 """
-from . import wropen_wrap_popen
+
+
+class Wropen:
+    def __init__(self):
+        pass
