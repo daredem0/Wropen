@@ -9,4 +9,7 @@ Encoding: UTF-8
 
 Copyright (c) 2023 Florian Leuze
 """
-from . import wropen_wrap_popen
+from .wropen_wrap_popen import Wropen
+from .wropen_wrap_popen import WropenMode
+from .wropen_wrap_popen import WropenNotConfigured
+from .wropen_wrap_popen import WropenState
