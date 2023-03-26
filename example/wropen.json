@@ -5,6 +5,7 @@
     },
     "message_1":{
         "message": "ls -lh",
-        "reply": "ls -lh dummy reply"
+        "reply": "ls -lh dummy reply",
+        "error": "no such command"
     }
 }
