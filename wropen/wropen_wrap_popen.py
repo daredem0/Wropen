@@ -11,6 +11,7 @@ Copyright (c) 2023 Florian Leuze
 """
 import json
 import subprocess
+from functools import wraps
 from enum import Enum
 from io import StringIO
 from typing import Any
@@ -70,7 +71,7 @@ class Wropen(subprocess.Popen):
         Args:
             func (Any): The function that is decorated.
         """
-
+        @wraps(func)
         def inner() -> None:
             """Intercepts Wropen into the popen call."""
             if not Wropen.state.debug:
