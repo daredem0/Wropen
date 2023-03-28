@@ -11,8 +11,8 @@ Copyright (c) 2023 Florian Leuze
 """
 import json
 import subprocess
-from functools import wraps
 from enum import Enum
+from functools import wraps
 from io import StringIO
 from typing import Any
 
@@ -58,6 +58,7 @@ class Wropen(subprocess.Popen):
         super().__init__(*args, **kwargs)
         self.stdout = StringIO()
         self.stdin = StringIO()
+        self.stdin.write(" ".join(self.args))
         self.stderr = StringIO()
         self.mode = WropenMode.PASS
         self.returncode = 0
@@ -71,6 +72,7 @@ class Wropen(subprocess.Popen):
         Args:
             func (Any): The function that is decorated.
         """
+
         @wraps(func)
         def inner() -> None:
             """Intercepts Wropen into the popen call."""
@@ -124,7 +126,14 @@ class Wropen(subprocess.Popen):
         Returns:
             bytes, bytes: stdout, stdin
         """
-        return self.stdin.getvalue(), self.stderr.getvalue()
+        return self.stdin.getvalue().encode("utf-8"), self.stderr.getvalue().encode("utf-8")
+
+    def _search_for_stdin_in_config(self):
+        for message_no in self._wropen_config:
+            if " ".join(self.args) == self._wropen_config[message_no]["message"]:
+                _stdout = self._wropen_config.get(message_no, {}).get("reply", "").encode("utf-8")
+                _stderr = self._wropen_config.get(message_no, {}).get("error", "").encode("utf-8")
+                return _stdout, _stderr
 
     def _get_reply(self):
         """Check if the message is defined in the provided json and get the reply.
@@ -133,11 +142,8 @@ class Wropen(subprocess.Popen):
         Returns:
             bytes, bytes: stdout, stderr
         """
-        for message_no in self._wropen_config:
-            if " ".join(self.args) == self._wropen_config[message_no]["message"]:
-                _stdout = self._wropen_config.get(message_no, {}).get("reply", "").encode("utf-8")
-                _stderr = self._wropen_config.get(message_no, {}).get("error", "").encode("utf-8")
-                return _stdout, _stderr
+        if (popen_result := self._search_for_stdin_in_config()) is not None:
+            return popen_result
         return self._init_streams()
 
     def communicate(self):
