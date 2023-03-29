@@ -27,11 +27,12 @@ class WropenMode(Enum):
 class WropenState:
     """Defines the persistent state of all Wropen instances."""
 
-    def __init__(self, mode: WropenMode, path: str, path_err: str = None, debug: bool = False) -> None:
+    def __init__(self, mode: WropenMode, path: str, path_err: str = None, debug: bool = False, encoding: str=None) -> None:
         self.mode: WropenMode = mode
         self.debug: bool = debug
         self._path: str = path
         self._err_path: str = path_err
+        self.encoding: str = encoding
         self.config_path: str = self._get_wropen_config_path()
 
     def _get_wropen_config_path(self) -> str:
@@ -58,12 +59,20 @@ class Wropen(subprocess.Popen):
         super().__init__(*args, **kwargs)
         self.stdout = StringIO()
         self.stdin = StringIO()
-        self.stdin.write(" ".join(self.args))
         self.stderr = StringIO()
+        self.stdin.write(" ".join(self.args))
         self.mode = WropenMode.PASS
         self.returncode = 0
         self._wropen_config = None
         self.init()
+        self._init_stdout_stderr(self._get_reply())
+        
+    def _init_stdout_stderr(self, stream_tuple):
+        (stdout, stderr) = stream_tuple
+        self.stdout.write(stdout)
+        self.stdout.seek(0)
+        self.stderr.write(stderr)
+        self.stderr.seek(0)
 
     @staticmethod
     def intercept_popen(func):
@@ -74,16 +83,15 @@ class Wropen(subprocess.Popen):
         """
 
         @wraps(func)
-        def inner() -> None:
+        def inner(*args, **kwargs):
             """Intercepts Wropen into the popen call."""
-            if not Wropen.state.debug:
-                func()
-                return
+            if Wropen.state is None or not Wropen.state.debug:
+                return func(*args, **kwargs)
             _real_popen = getattr(subprocess, "Popen")
             try:
                 print("Intercepted popen execution.")
                 setattr(subprocess, "Popen", lambda *args, **kwargs: Wropen(*args, **kwargs))
-                func()
+                return func(*args, **kwargs)
             finally:
                 setattr(subprocess, "Popen", _real_popen)
                 print("Restore popen.")
@@ -126,13 +134,27 @@ class Wropen(subprocess.Popen):
         Returns:
             bytes, bytes: stdout, stdin
         """
-        return self.stdin.getvalue().encode("utf-8"), self.stderr.getvalue().encode("utf-8")
+        return self._encode(self.stdin.getvalue().encode("utf-8")), self._encode(self.stderr.getvalue().encode("utf-8"))
+    
+    def _encode(self, message: str):
+        if self.state.encoding is not None:
+            return message.encode(self.state.encoding)
+        return message
+            
+    
+    def _evaluate_args(self):
+        if isinstance(self.args, list):
+            return " ".join(self.args)
+        return self.args
+    
+    def _access_message(self, message: str, key: str):
+            return self._encode(self._wropen_config.get(message, {}).get(key, ""))
 
     def _search_for_stdin_in_config(self):
         for message_no in self._wropen_config:
-            if " ".join(self.args) == self._wropen_config[message_no]["message"]:
-                _stdout = self._wropen_config.get(message_no, {}).get("reply", "").encode("utf-8")
-                _stderr = self._wropen_config.get(message_no, {}).get("error", "").encode("utf-8")
+            if self._evaluate_args() == self._wropen_config[message_no]["message"]:
+                _stdout = self._access_message(message_no, "reply")
+                _stderr = self._access_message(message_no, "error")
                 return _stdout, _stderr
 
     def _get_reply(self):
