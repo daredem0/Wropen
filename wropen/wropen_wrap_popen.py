@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
-TODO
+Wropen is a module that allows a minimalistic and almost non intrusive way
+of intercepting subprocess.Popen calls for unit testing. It mostly aims to
+provide a simple way of adding unit tests to legacy code without digging
+to deep, as a refactoring can be done better after unit testing is added.
 
 Date: 26.03.2023
 Author: Florian Leuze
@@ -27,7 +30,9 @@ class WropenMode(Enum):
 class WropenState:
     """Defines the persistent state of all Wropen instances."""
 
-    def __init__(self, mode: WropenMode, path: str, path_err: str = None, debug: bool = False, encoding: str=None) -> None:
+    def __init__(
+        self, mode: WropenMode, path: str, path_err: str = None, debug: bool = False, encoding: str = None
+    ) -> None:
         self.mode: WropenMode = mode
         self.debug: bool = debug
         self._path: str = path
@@ -65,10 +70,10 @@ class Wropen(subprocess.Popen):
         self.returncode = 0
         self._wropen_config = None
         self.init()
-        self._init_stdout_stderr(self._get_reply())
-        
-    def _init_stdout_stderr(self, stream_tuple):
-        (stdout, stderr) = stream_tuple
+        self._init_stdout_stderr()
+
+    def _init_stdout_stderr(self):
+        (stdout, stderr) = self._get_reply()
         self.stdout.write(stdout)
         self.stdout.seek(0)
         self.stderr.write(stderr)
@@ -108,11 +113,6 @@ class Wropen(subprocess.Popen):
         Wropen.state = state
 
     def _load_config_as_json(self) -> Any:
-        """Load json config file.
-
-        Returns:
-            dict: json dump
-        """
         with open(self.state.config_path, "r", encoding="utf-8") as _wropen:
             _wropen_json = json.load(_wropen)
         return _wropen_json
@@ -135,20 +135,33 @@ class Wropen(subprocess.Popen):
             bytes, bytes: stdout, stdin
         """
         return self._encode(self.stdin.getvalue().encode("utf-8")), self._encode(self.stderr.getvalue().encode("utf-8"))
-    
-    def _encode(self, message: str):
+
+    def _encode(self, message: str) -> Any:
+        """Encode depending on the inner state of Wropen.
+
+        Args:
+            message (str): The message that shall be printed.
+
+        Returns:
+            Any: Bytes if encoding set, else str
+        """
         if self.state.encoding is not None:
             return message.encode(self.state.encoding)
         return message
-            
-    
+
     def _evaluate_args(self):
+        """Depending on the type of the provided command concatenate
+        it or pass it through directly.
+
+        Returns:
+            str: Command
+        """
         if isinstance(self.args, list):
             return " ".join(self.args)
         return self.args
-    
-    def _access_message(self, message: str, key: str):
-            return self._encode(self._wropen_config.get(message, {}).get(key, ""))
+
+    def _access_message(self, message: str, key: str) -> Any:
+        return self._encode(self._wropen_config.get(message, {}).get(key, ""))
 
     def _search_for_stdin_in_config(self):
         for message_no in self._wropen_config:

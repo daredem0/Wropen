@@ -2,3 +2,11 @@
 line-length = 120
 skip-string-normalization = false
 skip-magic-trailing-comma = true
+
+[tool.pydoctor]
+add-package = ["wropen"]
+docformat = "restructuredtext"
+verbose = 1
+warnings-as-errors = false
+html-output = "./doc"
+theme = "readthedocs"
