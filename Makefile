@@ -9,8 +9,9 @@ help:
 	echo "TODO"
 
 lint:
-	${PYTHON} -m pylint wropen
-
+	[ -d "pylint" ] && rm -rf pylint || echo ""
+	${PYTHON} scripts/codequality.py -l -m wropen -t 9.0
+# && [ [ $? != "1" ] && [ $? != "2" ] ] exit 0
 docs:
 	pydoctor --make-html -c pyproject.toml --project-version=${CURRENT_VERSION}
 
