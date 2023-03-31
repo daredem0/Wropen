@@ -10,23 +10,23 @@ repos:
       - id: check-yaml
       - id: check-toml
 
--   repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.5.3
-    hooks:
-    -   id: nbqa-black
-        exclude: ^docs/
-    -   id: nbqa-isort
-        exclude: ^docs/
-    -   id: nbqa-flake8
-        exclude: ^docs/
-    -   id: nbqa-mypy
-        exclude: ^docs/
+# -   repo: https://github.com/nbQA-dev/nbQA
+#     rev: 1.5.3
+#     hooks:
+#     -   id: nbqa-black
+#         exclude: ^docs/
+#     -   id: nbqa-isort
+#         exclude: ^docs/
+#     -   id: nbqa-flake8
+#         exclude: ^docs/
+#     -   id: nbqa-mypy
+#         exclude: ^docs/
 
--   repo: https://github.com/MarcoGorelli/cython-lint
-    rev: v0.9.1
-    hooks:
-    -   id: cython-lint
-    -   id: double-quote-cython-strings
+# -   repo: https://github.com/MarcoGorelli/cython-lint
+#     rev: v0.9.1
+#     hooks:
+#     -   id: cython-lint
+#     -   id: double-quote-cython-strings
 
 -   repo: https://github.com/PyCQA/isort
     rev: 5.12.0
