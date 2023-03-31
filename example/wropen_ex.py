@@ -30,7 +30,9 @@ WROPEN_FAIL_PATH = "./wropen_fail.json"
 
 @Wropen.intercept_popen
 def run_test() -> None:
-    with subprocess.Popen(["ls", "-lh"], stdout=PIPE, stdin=PIPE, stderr=PIPE) as proc:
+    with subprocess.Popen(
+        ["ls", "-lh"], stdout=PIPE, stdin=PIPE, stderr=PIPE
+    ) as proc:
         print_communicate(proc.communicate)
 
 

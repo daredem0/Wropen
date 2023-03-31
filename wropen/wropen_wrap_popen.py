@@ -5,13 +5,11 @@ of intercepting subprocess.Popen calls for unit testing. It mostly aims to
 provide a simple way of adding unit tests to legacy code without digging
 to deep, as a refactoring can be done better after unit testing is added.
 
-Date: 26.03.2023
-Author: Florian Leuze
-E-Mail: f.leuze@outlook.de
-Encoding: UTF-8
-
-Copyright (c) 2023 Florian Leuze
+:since: 26.03.2023
+:author: Florian Leuze - f.leuze@outlook.de
+:note: Encoding: UTF-8
 """
+
 import json
 import subprocess
 from enum import Enum
@@ -27,11 +25,16 @@ class WropenMode(Enum):
     FAIL = 0x01
 
 
-class WropenState:
+class WropenState:  # pylint: disable=R0903,R0913
     """Defines the persistent state of all Wropen instances."""
 
     def __init__(
-        self, mode: WropenMode, path: str, path_err: str = None, debug: bool = False, encoding: str = None
+        self,
+        mode: WropenMode,
+        path: str,
+        path_err: str = None,
+        debug: bool = False,
+        encoding: str = None,
     ) -> None:
         self.mode: WropenMode = mode
         self.debug: bool = debug
@@ -94,12 +97,16 @@ class Wropen(subprocess.Popen):
                 return func(*args, **kwargs)
             _real_popen = getattr(subprocess, "Popen")
             try:
-                print("Intercepted popen execution.")
-                setattr(subprocess, "Popen", lambda *args, **kwargs: Wropen(*args, **kwargs))
+                # print("Intercepted popen execution.")
+                setattr(
+                    subprocess,
+                    "Popen",
+                    lambda *args, **kwargs: Wropen(*args, **kwargs),
+                )
                 return func(*args, **kwargs)
             finally:
                 setattr(subprocess, "Popen", _real_popen)
-                print("Restore popen.")
+                # print("Restore popen.")
 
         return inner
 
@@ -134,7 +141,9 @@ class Wropen(subprocess.Popen):
         Returns:
             bytes, bytes: stdout, stdin
         """
-        return self._encode(self.stdin.getvalue().encode("utf-8")), self._encode(self.stderr.getvalue().encode("utf-8"))
+        return self._encode(
+            self.stdin.getvalue().encode("utf-8")
+        ), self._encode(self.stderr.getvalue().encode("utf-8"))
 
     def _encode(self, message: str) -> Any:
         """Encode depending on the inner state of Wropen.
@@ -165,10 +174,14 @@ class Wropen(subprocess.Popen):
 
     def _search_for_stdin_in_config(self):
         for message_no in self._wropen_config:
-            if self._evaluate_args() == self._wropen_config[message_no]["message"]:
+            if (
+                self._evaluate_args()
+                == self._wropen_config[message_no]["message"]
+            ):
                 _stdout = self._access_message(message_no, "reply")
                 _stderr = self._access_message(message_no, "error")
                 return _stdout, _stderr
+        return None
 
     def _get_reply(self):
         """Check if the message is defined in the provided json and get the reply.
@@ -181,7 +194,7 @@ class Wropen(subprocess.Popen):
             return popen_result
         return self._init_streams()
 
-    def communicate(self):
+    def communicate(self, *args, **kwargs):  # pylint: disable=W0613
         """Immitate the communicate method and respond with stderr and stdour
         utf-8 encoded byte objects.
 
