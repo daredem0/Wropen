@@ -17,3 +17,8 @@ docs:
 
 wheel:
 	${PYTHON} setup.py bdist_wheel
+
+clean:
+	rm -rf doc pylint *.egg-info build dist .mypy*
+	find . -name __pycache__ -type d -exec rm {}/* \;
+	find . -name __pycache__ -type d -exec rmdir {} \;
