@@ -173,7 +173,10 @@ class Wropen(subprocess.Popen):
         return self.args
 
     def _access_message(self, message: str, key: str) -> Any:
-        return self._encode(self._wropen_config.get(message, {}).get(key, ""))
+        _lines = self._wropen_config.get(message, {}).get(key, [])
+        if len(_lines) <= 0:
+            _lines = ""
+        return self._encode("\n".join(_lines))
 
     def _search_for_stdin_in_config(self):
         for message_no in self._wropen_config:
