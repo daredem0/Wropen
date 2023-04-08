@@ -76,10 +76,13 @@ class Wropen(subprocess.Popen):
         self._init_stdout_stderr()
 
     def _init_stdout_stderr(self):
-        (stdout, stderr) = self._get_reply()
-        self.stdout.write(stdout)
+        (_stdout, _stderr) = self._get_reply()
+        if self.state.encoding is not None:
+            _stdout = _stdout.decode(encoding=self.state.encoding)
+            _stderr = _stderr.decode(encoding=self.state.encoding)
+        self.stdout.write(_stdout)
         self.stdout.seek(0)
-        self.stderr.write(stderr)
+        self.stderr.write(_stderr)
         self.stderr.seek(0)
 
     @staticmethod
