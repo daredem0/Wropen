@@ -42,7 +42,9 @@ def print_communicate(func: Callable) -> None:
 
 
 if __name__ == "__main__":
-    wropen_state = WropenState(WropenMode.PASS, WROPEN_PASS_PATH)
+    wropen_state = WropenState(
+        WropenMode.PASS, WROPEN_PASS_PATH, encoding="utf-8"
+    )
     wropen_state.debug = False
     Wropen.configure(wropen_state)
     run_test()

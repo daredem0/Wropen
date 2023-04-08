@@ -1,11 +1,20 @@
 {
     "message_0":{
         "message": "ls",
-        "reply": "ls dummy reply"
+        "reply": [
+            "ls dummy reply"
+        ]
     },
     "message_1":{
         "message": "ls -lh",
-        "reply": "ls -lh dummy reply",
-        "error": "no such command"
+        "reply": [
+            "total X.0K",
+            "-xxxxxxxxx 1 florian florian 1.1K Apr  8 17:51 wropen_ex.py",
+            "-xxxxxxxxx 1 florian florian  287 Apr  8 17:55 wropen.json",
+            "ls -lh dummy reply"
+        ],
+        "error": [
+            "no such command"
+        ]
     }
 }
