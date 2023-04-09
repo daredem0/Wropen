@@ -22,7 +22,9 @@ class WropenMode(Enum):
     """Wropen mode enum."""
 
     PASS = 0x00
+    """Sets Wropen to PASS mode (prints to stdout)."""
     FAIL = 0x01
+    """Sets Wropen to FAIL mode (prints to stderr)."""
 
 
 class WropenState:  # pylint: disable=R0903,R0913
@@ -36,6 +38,23 @@ class WropenState:  # pylint: disable=R0903,R0913
         debug: bool = False,
         encoding: str = None,
     ) -> None:
+        """Construct the global Wropen instance.
+
+        :param mode: Defines the current mode of the wropen instance.
+        :type mode: WropenMode
+
+        :param path: Json file containing the message definitions Wropen shall use.
+        :type path: str
+
+        :param path_err: Json file containing the message definitions for error mode. Default: None
+        :type path_err: str
+
+        :param debug: Activates subprocess.Popen interception. Default: True
+        :type debug: bool
+
+        :param encoding: If not None sets encoding for out/err. Default: None
+        :type encoding: str
+        """
         self.mode: WropenMode = mode
         self.debug: bool = debug
         self._path: str = path
@@ -46,8 +65,8 @@ class WropenState:  # pylint: disable=R0903,R0913
     def _get_wropen_config_path(self) -> str:
         """Choose the appropriate wropen config path depending on the mode.
 
-        Returns:
-            str: path
+        :return: Path
+        :rtype: str
         """
         if self.mode == WropenMode.PASS:
             return self._path
@@ -89,8 +108,8 @@ class Wropen(subprocess.Popen):
     def intercept_popen(func):
         """Can be used as decorator wo intercept popen calls.
 
-        Args:
-            func (Any): The function that is decorated.
+        :param func: The function that is decorated.
+        :type func: Any
         """
 
         @wraps(func)
@@ -117,8 +136,8 @@ class Wropen(subprocess.Popen):
     def configure(state: WropenState) -> None:
         """Configure the Wropen object.
 
-        Args:
-            state (WropenState): Defines the inner state of Wropen.
+        :param state: Defines the inner state of Wropen.
+        :type state: WropenState
         """
         Wropen.state = state
 
@@ -131,8 +150,7 @@ class Wropen(subprocess.Popen):
         """Initialize the Wropen object if it has been configured properly.
         All provided config files are loaded.
 
-        Raises:
-            WropenNotConfigured: If Wropen object is not configured.
+        :raises WropenNotConfigured: If Wropen object is not configured.
         """
         if self.state is None:
             raise WropenNotConfigured("You need to call Wropen.configure once.")
@@ -141,8 +159,8 @@ class Wropen(subprocess.Popen):
     def _init_streams(self):
         """Initialize stdin and stderr by piping stdint to stdout.
 
-        Returns:
-            bytes, bytes: stdout, stdin
+        :return: stdout, stdin
+        :rtype: bytes, bytes
         """
         return self._encode(
             self.stdin.getvalue().encode("utf-8")
@@ -151,11 +169,11 @@ class Wropen(subprocess.Popen):
     def _encode(self, message: str) -> Any:
         """Encode depending on the inner state of Wropen.
 
-        Args:
-            message (str): The message that shall be printed.
+        :param message: The message that shall be printed.
+        :type message: str
 
-        Returns:
-            Any: Bytes if encoding set, else str
+        :return: Bytes if encoding set, else str
+        :rtype: Any
         """
         if self.state.encoding is not None:
             return message.encode(self.state.encoding)
@@ -165,8 +183,8 @@ class Wropen(subprocess.Popen):
         """Depending on the type of the provided command concatenate
         it or pass it through directly.
 
-        Returns:
-            str: Command
+        :return: Command
+        :rtype: str
         """
         if isinstance(self.args, list):
             return " ".join(self.args)
@@ -193,8 +211,8 @@ class Wropen(subprocess.Popen):
         """Check if the message is defined in the provided json and get the reply.
         If no message is defined the stdin is piped into stdout.
 
-        Returns:
-            bytes, bytes: stdout, stderr
+        :return: stdout, stderr.
+        :rtype: bytes, bytes
         """
         if (popen_result := self._search_for_stdin_in_config()) is not None:
             return popen_result
@@ -204,7 +222,7 @@ class Wropen(subprocess.Popen):
         """Immitate the communicate method and respond with stderr and stdour
         utf-8 encoded byte objects.
 
-        Returns:
-            bytes, bytes: stdout, stderr
+        :return: stdout, stderr.
+        :rtype: bytes, bytes
         """
         return self._get_reply()
