@@ -82,11 +82,19 @@ class Wropen(subprocess.Popen):
 
     state: WropenState = None
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, args, bufsize=-1, executable=None,
+                 stdin=None, stdout=None, stderr=None,
+                 preexec_fn=None, close_fds=True,
+                 shell=False, cwd=None, env=None, universal_newlines=None,
+                 startupinfo=None, creationflags=0,
+                 restore_signals=True, start_new_session=False,
+                 pass_fds=(), *, user=None, group=None, extra_groups=None,
+                 encoding=None, errors=None, text=None, umask=-1, pipesize=-1):
+        """Create new Popen instance."""
         self.stdout = StringIO()
         self.stdin = StringIO()
         self.stderr = StringIO()
+        self.args = args
         self.stdin.write(" ".join(self.args))
         self.mode = WropenMode.PASS
         self.returncode = 0
@@ -116,6 +124,7 @@ class Wropen(subprocess.Popen):
         def inner(*args, **kwargs):
             """Intercepts Wropen into the popen call."""
             if Wropen.state is None or not Wropen.state.debug:
+                #print("Wropen inactive")
                 return func(*args, **kwargs)
             _real_popen = getattr(subprocess, "Popen")
             try:
@@ -128,7 +137,7 @@ class Wropen(subprocess.Popen):
                 return func(*args, **kwargs)
             finally:
                 setattr(subprocess, "Popen", _real_popen)
-                # print("Restore popen.")
+                #print("Restore popen.")
 
         return inner
 
@@ -196,6 +205,9 @@ class Wropen(subprocess.Popen):
             _lines = ""
         return self._encode("\n".join(_lines))
 
+    def _access_return_code(self, message: str) -> Any:
+        return self._wropen_config.get(message, {}).get("returncode", 0)
+
     def _search_for_stdin_in_config(self):
         for message_no in self._wropen_config:
             if (
@@ -204,6 +216,7 @@ class Wropen(subprocess.Popen):
             ):
                 _stdout = self._access_message(message_no, "reply")
                 _stderr = self._access_message(message_no, "error")
+                self.returncode = self._access_return_code(message_no)
                 return _stdout, _stderr
         return None
 
