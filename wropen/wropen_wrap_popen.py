@@ -82,14 +82,35 @@ class Wropen(subprocess.Popen):
 
     state: WropenState = None
 
-    def __init__(self, args, bufsize=-1, executable=None,
-                 stdin=None, stdout=None, stderr=None,
-                 preexec_fn=None, close_fds=True,
-                 shell=False, cwd=None, env=None, universal_newlines=None,
-                 startupinfo=None, creationflags=0,
-                 restore_signals=True, start_new_session=False,
-                 pass_fds=(), *, user=None, group=None, extra_groups=None,
-                 encoding=None, errors=None, text=None, umask=-1, pipesize=-1):
+    def __init__(
+        self,
+        args,
+        bufsize=-1,
+        executable=None,
+        stdin=None,
+        stdout=None,
+        stderr=None,
+        preexec_fn=None,
+        close_fds=True,
+        shell=False,
+        cwd=None,
+        env=None,
+        universal_newlines=None,
+        startupinfo=None,
+        creationflags=0,
+        restore_signals=True,
+        start_new_session=False,
+        pass_fds=(),
+        *,
+        user=None,
+        group=None,
+        extra_groups=None,
+        encoding=None,
+        errors=None,
+        text=None,
+        umask=-1,
+        pipesize=-1,
+    ):
         """Create new Popen instance."""
         self.stdout = StringIO()
         self.stdin = StringIO()
@@ -124,7 +145,7 @@ class Wropen(subprocess.Popen):
         def inner(*args, **kwargs):
             """Intercepts Wropen into the popen call."""
             if Wropen.state is None or not Wropen.state.debug:
-                #print("Wropen inactive")
+                # print("Wropen inactive")
                 return func(*args, **kwargs)
             _real_popen = getattr(subprocess, "Popen")
             try:
@@ -137,7 +158,7 @@ class Wropen(subprocess.Popen):
                 return func(*args, **kwargs)
             finally:
                 setattr(subprocess, "Popen", _real_popen)
-                #print("Restore popen.")
+                # print("Restore popen.")
 
         return inner
 
@@ -171,9 +192,13 @@ class Wropen(subprocess.Popen):
         :return: stdout, stdin
         :rtype: bytes, bytes
         """
-        return self._encode(
-            self.stdin.getvalue().encode("utf-8")
-        ), self._encode(self.stderr.getvalue().encode("utf-8"))
+        if self.state.encoding is not None:
+            return self._encode(
+                self.stdin.getvalue().encode("utf-8")
+            ), self._encode(self.stderr.getvalue().encode("utf-8"))
+        return self._encode(self.stdin.getvalue()), self._encode(
+            self.stderr.getvalue()
+        )
 
     def _encode(self, message: str) -> Any:
         """Encode depending on the inner state of Wropen.
